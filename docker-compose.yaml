@@ -1,0 +1,24 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: sample_app
+      POSTGRES_PASSWORD: s4mpl3_4pp
+      POSTGRES_DB: sample_app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./src/main/resources/sql:/docker-entrypoint-initdb.d
+  sample-app:
+    build:
+      context: .
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_NAME: sample_app_db
+      DATABASE_USERNAME: sample_app
+      DATABASE_PASSWORD: s4mpl3_4pp
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres

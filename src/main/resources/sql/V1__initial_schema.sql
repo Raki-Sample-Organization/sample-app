@@ -1,0 +1,5 @@
+CREATE TABLE Greetings(
+    Id VARCHAR(36) PRIMARY KEY NOT NULL,
+    Language VARCHAR(50) NOT NULL,
+    Content VARCHAR(255) NOT NULL
+);

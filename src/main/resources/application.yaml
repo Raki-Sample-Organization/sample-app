@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: sample-app
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DATABASE_HOST}:5432/${DATABASE_NAME}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+---
+spring:
+  config.activate.on-profile: local
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sample_app_db
+    username: sample_app
+    password: s4mpl3_4pp
