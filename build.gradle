@@ -1,0 +1,60 @@
+plugins {
+	id 'org.springframework.boot' version '2.7.0'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'nu.studer.jooq' version '7.0'
+	id 'java'
+}
+
+group = 'org.raki'
+version = '0.1.0'
+sourceCompatibility = '17'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-jooq'
+	implementation 'org.postgresql:postgresql'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+
+	jooqGenerator 'org.postgresql:postgresql'
+	jooqGenerator 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'
+}
+
+jooq {
+	configurations {
+		main {
+			generationTool {
+				jdbc {
+					driver = 'org.postgresql.Driver'
+					url = "jdbc:postgresql://localhost:5432/sample_app_db"
+					user = 'sample_app'
+					password = 's4mpl3_4pp'
+					schema = 'public'
+				}
+				generator {
+					name = 'org.jooq.codegen.DefaultGenerator'
+					database {
+						name = 'org.jooq.meta.postgres.PostgresDatabase'
+						inputSchema = 'public'
+					}
+					target {
+						packageName = 'org.raki.generated.jooq'
+						directory = 'build/generated-sources/jooq'
+					}
+					strategy {
+						name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+					}
+				}
+			}
+		}
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
