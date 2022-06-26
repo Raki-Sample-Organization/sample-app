@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM gradle:7.4-jdk17-alpine AS build-env
 COPY ./build/generated-sources /app/build/generated-sources
 COPY ./src /app/src

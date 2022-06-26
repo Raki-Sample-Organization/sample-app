@@ -16,6 +16,7 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-jooq'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -31,9 +32,9 @@ jooq {
             generationTool {
                 jdbc {
                     driver = 'org.postgresql.Driver'
-                    url = "jdbc:postgresql://localhost:5432/sample_app_db"
-                    user = 'sample_app'
-                    password = 's4mpl3_4pp'
+                    url = "jdbc:postgresql://${System.getenv('DATABASE_HOST') ?: "localhost"}:5432/${System.getenv('DATABASE_NAME') ?: "sample_app_db"}"
+                    user = System.getenv('DATABASE_USERNAME') ?: 'sample_app'
+                    password = System.getenv('DATABASE_PASSWORD') ?: 's4mpl3_4pp'
                     schema = 'public'
                 }
                 generator {

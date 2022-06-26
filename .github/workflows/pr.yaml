@@ -1,0 +1,36 @@
+---
+name: Pull Request
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  build_and_test:
+    name: Check YAML files
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: sample_app
+          POSTGRES_PASSWORD: s4mpl3_4pp
+          POSTGRES_DB: sample_app_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        volumes:
+          - ${{ github.workspace }}/src/main/resources/sql:/docker-entrypoint-initdb.d
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Run Unit Tests
+        run: gradle build
+      - name: Run application stack
+        run: docker-compose up --build --force-recreate -d
+      - name: Run Integration Tests
+        run: docker-compose up tests
+      - name: Turn application down
+        run: docker-compose down
