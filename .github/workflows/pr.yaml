@@ -7,28 +7,11 @@ jobs:
   build_and_test:
     name: Build and Test
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:14-alpine
-        env:
-          POSTGRES_USER: sample_app
-          POSTGRES_PASSWORD: s4mpl3_4pp
-          POSTGRES_DB: sample_app_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        volumes:
-          - ${{ github.workspace }}/src/main/resources/sql:/docker-entrypoint-initdb.d
-        ports:
-          - 5432:5432
     steps:
-      # Workaround: https://github.com/actions/checkout/issues/211#issuecomment-611986243
-      - name: Allow github actions to clone repo
-        run: sudo chown -R $USER:$USER ${{ github.workspace }}/sample-app
       - name: Checkout source code
         uses: actions/checkout@master
+      - name: Run database container
+        run: docker-compose up -d postgres
       - name: Run Unit Tests
         run: gradle build
       - name: Run application stack
