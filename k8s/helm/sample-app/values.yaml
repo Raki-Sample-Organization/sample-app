@@ -1,0 +1,103 @@
+---
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: nginx
+  tag: stable
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+deployment:
+  replicaCount: 3
+  # Possible values: rollingUpdate | blueGreen | canary | abTesting
+  strategy: rollingUpdate
+  # Maximum unavailable pods
+  maxUnavailable: 0
+  # Blue Green configuration (only works if `strategy` == "rollingUpdate")
+  rollingUpdateConfig:
+    maxSurge: 25%
+    maxUnavailable: 0
+  # Blue Green configuration (only works if `strategy` == "blueGreen")
+  # blueGreenConfig:
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#autopromotionenabled
+  #   autoPromotionEnabled: false
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#autopromotionseconds
+  #   autoPromotionSeconds: null
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#previewreplicacount
+  #   previewReplicaCount: 2
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#scaledowndelayseconds
+  #   scaleDownDelaySeconds: 30
+  #   # List of analysis templates to execute BEFORE promoting new version
+  #   prePromotionAnalysis: [health-test]
+  #   # List of analysis templates to execute AFTER promoting new version
+  #   postPromotionAnalysis: [health-test]
+  # Canary configuration (only works if `strategy` == "blueGreen")
+  # canaryConfig:
+  #   # Maximum number of replicas the rollout can create to move to the correct ratio set by the last setWeight
+  #   maxSurge: 25%
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/canary/#example
+  #   steps:
+  #     - setWeight: 20
+  #     - pause:
+  #         duration: 1h
+  #     - setWeight: 50
+  #     - pause:
+  #         duration: 1h
+  #   analysisTemplates: [health-test]
+  #   analysisStartingStep: 2
+  # A/B testing configuration
+  # abTestingConfig:
+  #   duration: 12h
+  #   replicas: 1
+  #   analysisTemplates:
+  #     - health-test
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 3
+readinessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 3
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""

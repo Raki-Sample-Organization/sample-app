@@ -1,0 +1,15 @@
+---
+deployment:
+  strategy: canary
+  canaryConfig:
+    maxSurge: 25%
+    steps:
+      - setWeight: 20
+      - pause:
+          duration: 2m
+      - setWeight: 50
+      - pause:
+          duration: 2m
+    analysisTemplates:
+      - health-test
+    analysisStartingStep: 2

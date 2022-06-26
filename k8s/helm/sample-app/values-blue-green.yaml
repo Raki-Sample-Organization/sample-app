@@ -1,0 +1,13 @@
+---
+deployment:
+  strategy: blueGreen
+  blueGreenConfig:
+    autoPromotionEnabled: false
+    autoPromotionSeconds: null
+    previewReplicaCount: 2
+    scaleDownDelaySeconds: 30
+    scaleDownDelayRevisionLimit: 
+    prePromotionAnalysis:
+      - health-test
+    postPromotionAnalysis:
+      - health-test
