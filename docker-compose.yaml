@@ -22,3 +22,13 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
+  tests:
+    profiles: [tests]
+    image: cypress/included:10.2.0
+    environment:
+      CYPRESS_APP_HOST: http://sample-app:8080
+    working_dir: /e2e
+    volumes:
+      - ./integration-tests:/e2e
+    depends_on:
+      - sample-app
