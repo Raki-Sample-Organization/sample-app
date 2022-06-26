@@ -10,6 +10,10 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@master
+      - uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: '17'
       - name: Run database container
         run: docker-compose up -d postgres
       - name: Run Unit Tests
