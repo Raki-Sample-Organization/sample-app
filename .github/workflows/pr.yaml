@@ -26,7 +26,7 @@ jobs:
     steps:
       # Workaround: https://github.com/actions/checkout/issues/211#issuecomment-611986243
       - name: Allow github actions to clone repo
-        run: sudo chown -R $USER:$USER /home/github/actions-runner/_work/sample-app
+        run: sudo chown -R $USER:$USER ${{ github.workspace }}/sample-app
       - name: Checkout source code
         uses: actions/checkout@master
       - name: Run Unit Tests
