@@ -5,7 +5,7 @@ on:
     branches: [main]
 jobs:
   build_and_test:
-    name: Check YAML files
+    name: Build and Test
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -20,7 +20,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         volumes:
-          - ${{ github.workspace }}/src/main/resources/sql:/docker-entrypoint-initdb.d
+          - ./src/main/resources/sql:/docker-entrypoint-initdb.d
         ports:
           - 5432:5432
     steps:
@@ -34,3 +34,12 @@ jobs:
         run: docker-compose up tests
       - name: Turn application down
         run: docker-compose down
+  helm_checks:
+    name: Helm checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Helm Lint
+        working-directory: ./k8s/helm/sample-app
+        run: helm lint
