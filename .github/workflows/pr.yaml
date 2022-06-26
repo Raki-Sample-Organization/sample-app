@@ -20,10 +20,13 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         volumes:
-          - ./src/main/resources/sql:/docker-entrypoint-initdb.d
+          - ${{ github.workspace }}/src/main/resources/sql:/docker-entrypoint-initdb.d
         ports:
           - 5432:5432
     steps:
+      # Workaround: https://github.com/actions/checkout/issues/211#issuecomment-611986243
+      - name: Allow github actions to clone repo
+        run: sudo chown -R $USER:$USER /home/github/actions-runner/_work/sample-app
       - name: Checkout source code
         uses: actions/checkout@master
       - name: Run Unit Tests
