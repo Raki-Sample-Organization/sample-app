@@ -42,7 +42,7 @@ jobs:
       - name: Helm Lint
         run: helm lint $HELM_PATH
   test_manifests:
-    name: Build and Test
+    name: Test Kubernetes manifests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -56,7 +56,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: $AWS_REGION
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: TestsManifests
       - name: Connect to EKS Cluster
