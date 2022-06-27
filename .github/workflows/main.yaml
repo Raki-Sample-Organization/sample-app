@@ -44,8 +44,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@master
       - name: Helm Lint
-        working-directory: $HELM_PATH
-        run: helm lint
+        run: helm lint $HELM_PATH
   build_image:
     name: Build image
     runs-on: ubuntu-latest
