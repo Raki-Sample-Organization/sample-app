@@ -28,30 +28,14 @@ jobs:
       - name: Run database container
         run: docker-compose up -d postgres
       - name: Run unit tests
-        run: gradle build
-      - name: Run application stack
-        if: ${{ ! contains(github.event.commits[0].message, '[EPHEMERAL]') }}
-        run: docker-compose up --build --force-recreate -d
-      - name: Run integration tests
-        if: ${{ ! contains(github.event.commits[0].message, '[EPHEMERAL]') }}
-        run: docker-compose --profile tests up --exit-code-from tests
-      - name: Turn application down
-        run: docker-compose down
-  helm_checks:
-    name: Helm checks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@master
-      - name: Helm Lint
-        run: helm lint $HELM_PATH
+        run: make build-app-image
   build_image:
     name: Build image
     runs-on: ubuntu-latest
+    needs: test
     permissions:
       id-token: write
-      contents: read
-      pull-requests: write
+      contents: write
     outputs:
       tag: ${{ steps.tag_version.outputs.new_tag }}
       registry: ${{ steps.login_ecr.outputs.registry }}
@@ -116,7 +100,7 @@ jobs:
   deploy_to_production:
     name: Deploy to production
     runs-on: ubuntu-latest
-    needs: build_image
+    needs: integration_tests
     permissions:
       id-token: write
       contents: read
