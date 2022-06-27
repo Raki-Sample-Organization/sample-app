@@ -82,7 +82,7 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: build_image
-    if: contains(github.event.commits[0].message, "[EPHEMERAL]")
+    if: contains(github.event.commits[0].message, '[EPHEMERAL]')
     env:
       ECR_REGISTRY: ${{ needs.build_image.outputs.registry }}
       IMAGE_TAG: ${{ needs.build_image.outputs.tag }}
@@ -146,9 +146,9 @@ jobs:
           DEPLOYMENT_STRATEGY=rollingUpdate
           if [[ "${{ contains(github.event.commits[0].message, '[BLUE-GREEN]') }}" == "true" ]]; then
             DEPLOYMENT_STRATEGY=blueGreen
-          elif [[ "${{ contains(github.event.commits[0].message, "[CANARY]") }}" ]]; then
+          elif [[ "${{ contains(github.event.commits[0].message, '[CANARY]') }}" ]]; then
             DEPLOYMENT_STRATEGY=canary
-          elif [[ "${{ contains(github.event.commits[0].message, "[AB]") }}" ]]; then
+          elif [[ "${{ contains(github.event.commits[0].message, '[AB]') }}" ]]; then
             DEPLOYMENT_STRATEGY=abTesting
           fi
           echo "::set-output name=value::$DEPLOYMENT_STRATEGY"
