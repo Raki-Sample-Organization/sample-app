@@ -11,6 +11,6 @@ spec:
       successCondition: result == "UP"
       provider:
         web:
-          url: {{ print "http://" "{{" " args.service-name " "}}" "/actuator/health" | quote }}
+          url: {{ print "http://" "{{" " args.service-name " "}}" ".svc.cluster.local:8080/actuator/health" | quote }}
           jsonPath: "{$.status}"
 {{- end -}}

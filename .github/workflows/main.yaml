@@ -1,0 +1,157 @@
+---
+name: Main
+on:
+  push:
+    branches: [main]
+env:
+  DOCKER_BUILDKIT: "1"
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: sample-app
+  CLUSTER_NAME: raki-sample-org-production-apps
+  HELM_PATH: k8s/helm/web-service
+  NAMESPACE: sample-app
+  ARGO_ROLLOUT_NAME: sample-app
+  INFRASTRUCTURE_REPO: Raki-Sample-Organization/infrastructure
+  INFRASTRUCTURE_EPHEMERAL_PATH: k8s/overlays/ephemeral/sample-app
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: '17'
+      - name: Run database container
+        run: docker-compose up -d postgres
+      - name: Run unit tests
+        run: gradle build
+      - name: Run application stack
+        if: ${{ ! contains(github.event.commits[0].message, "[EPHEMERAL]") }}
+        run: docker-compose up --build --force-recreate -d
+      - name: Run integration tests
+        if: ${{ ! contains(github.event.commits[0].message, "[EPHEMERAL]") }}
+        run: docker-compose --profile tests up --exit-code-from tests
+      - name: Turn application down
+        run: docker-compose down
+  helm_checks:
+    name: Helm checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Helm Lint
+        working-directory: $HELM_PATH
+        run: helm lint
+  build_image:
+    name: Build image
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    outputs:
+      tag: ${{ steps.tag_version.outputs.new_tag }}
+      registry: ${{ steps.login_ecr.outputs.registry }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: SampleAppDockerBuild
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to Amazon ECR
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build, tag, and push images to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.tag_version.outputs.new_tag }}
+        run: make build-push-images
+  integration_tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build_image
+    if: contains(github.event.commits[0].message, "[EPHEMERAL]")
+    env:
+      ECR_REGISTRY: ${{ needs.build_image.outputs.registry }}
+      IMAGE_TAG: ${{ needs.build_image.outputs.tag }}
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Checkout infrastructure repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.INFRASTRUCTURE_REPO }}
+          token: ${{ secrets.GH_REPO_VIEWER_TOKEN }}
+          path: infrastructure
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: SampleAppIntegrationTests
+      - name: Connect to EKS Cluster
+        run: aws eks update-kubeconfig --name $CLUSTER_NAME 2>/dev/null
+      - name: Create ephemeral environment
+        run: kubectl apply -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
+      - name: Install application and run integration tests
+        run: make deploy-ephemeral-app
+      - name: Destroy ephemeral environment
+        if: always()
+        run: kubectl delete -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
+  deploy_to_production:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: build_image
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: SampleAppIntegrationTests
+      - name: Connect to cluster
+        run: aws eks update-kubeconfig --name $CLUSTER_NAME 2>/dev/null
+      - uses: supplypike/setup-bin@v1
+        with:
+          uri: https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+          name: kubectl-argo-rollouts
+          version: latest
+      - name: Restart pods
+        run: kubectl-argo-rollouts -n $NAMESPACE restart $ARGO_ROLLOUT_NAME
+      - name: Set deployment strategy
+        id: deployment_strategy
+        run: |-
+          DEPLOYMENT_STRATEGY=rollingUpdate
+          if [[ "${{ contains(github.event.commits[0].message, '[BLUE-GREEN]') }}" == "true" ]]; then
+            DEPLOYMENT_STRATEGY=blueGreen
+          elif [[ "${{ contains(github.event.commits[0].message, "[CANARY]") }}" ]]; then
+            DEPLOYMENT_STRATEGY=canary
+          elif [[ "${{ contains(github.event.commits[0].message, "[AB]") }}" ]]; then
+            DEPLOYMENT_STRATEGY=abTesting
+          fi
+          echo "::set-output name=value::$DEPLOYMENT_STRATEGY"
+      - name: Deploy application
+        env:
+          DEPLOYMENT_STRATEGY: ${{ steps.deployment_strategy.outputs.value }}
+        run: make deploy
