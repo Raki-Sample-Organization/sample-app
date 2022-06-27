@@ -1,0 +1,28 @@
+{{- if .Values.integrationTests.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ print (include "web-service.fullname" .) "-it" }}
+  labels:
+    {{- include "web-service.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 120
+  backoffLimit: 0
+  template:
+    metadata:
+      name: {{ print (include "web-service.fullname" .) "-it" }}
+      labels:
+        {{- include "web-service.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: integration-tests
+          image: {{ .Values.integrationTests.image }}
+          env:
+            - name: CYPRESS_APP_HOST
+              value: {{ printf "http://%s.%s.svc.cluster.local:8080" (include "web-service.fullname" .) .Release.Namespace }}
+{{- end -}}

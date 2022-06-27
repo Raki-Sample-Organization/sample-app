@@ -1,0 +1,6 @@
+/.github
+/assets
+/integration-tests
+/k8s
+docker-compose.yaml
+README.md

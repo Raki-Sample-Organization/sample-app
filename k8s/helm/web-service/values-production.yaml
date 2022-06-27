@@ -1,0 +1,71 @@
+---
+fullnameOverride: sample-app
+
+deployment:
+  strategy: "" # Set by GitHub Actions
+  replicaCount: 10
+  maxUnavailable: 0
+  ##################################################################
+  # Rolling update strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'rollingUpdate'
+  ##################################################################
+  rollingUpdateConfig:
+    maxSurge: 50%
+    maxUnavailable: 0
+  ##################################################################
+  # Blue-Green strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'blueGreen'
+  ##################################################################
+  blueGreenConfig:
+    autoPromotionEnabled: false
+    autoPromotionSeconds: null
+    previewReplicaCount: 2
+    scaleDownDelaySeconds: 30
+    scaleDownDelayRevisionLimit:
+    prePromotionAnalysis:
+      - health-test
+    postPromotionAnalysis:
+      - health-test
+  ##################################################################
+  # Canary strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'canary'
+  ##################################################################
+  canaryConfig:
+    maxSurge: 25%
+    steps:
+      - setWeight: 20
+      - pause:
+          duration: 2m
+      - setWeight: 50
+      - pause:
+          duration: 2m
+    analysisTemplates:
+      - health-test
+    analysisStartingStep: 2
+  ##################################################################
+  # A/B test strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'abTesting'
+  ##################################################################
+  abTestingConfig:
+    duration: 12h
+    replicas: 1
+    analysisTemplates:
+      - health-test
+
+##################################################################
+# Container configuration
+##################################################################
+image:
+  repository: # Set by GitHub actions
+  tag: # Set by GitHub actions
+  pullPolicy: Always
+
+##################################################################
+# Database configuration
+##################################################################
+databaseName: sampleappdb
+databaseSecret:
+  name: sample-app-postgres
+  usernameKey: username
+  passwordKey: password
+  hostKey: endpoint

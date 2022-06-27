@@ -3,12 +3,12 @@ apiVersion: v1
 kind: Service
 metadata:
   {{- if eq .Values.deployment.strategy "blueGreen" }}
-  name: {{ print (include "sample-app.fullname" .) "-preview" }}
+  name: {{ print (include "web-service.fullname" .) "-preview" }}
   {{- else if eq .Values.deployment.strategy "canary" }}
-  name: {{ print (include "sample-app.fullname" .) "-canary" }}
+  name: {{ print (include "web-service.fullname" .) "-canary" }}
   {{- end }}
   labels:
-    {{- include "sample-app.labels" . | nindent 4 }}
+    {{- include "web-service.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -17,16 +17,16 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app.kubernetes.io/name: {{ include "sample-app.name" . }}
+    app.kubernetes.io/name: {{ include "web-service.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
 ---
 {{- end -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "sample-app.fullname" . }}
+  name: {{ include "web-service.fullname" . }}
   labels:
-    {{- include "sample-app.labels" . | nindent 4 }}
+    {{- include "web-service.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -35,5 +35,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app.kubernetes.io/name: {{ include "sample-app.name" . }}
+    app.kubernetes.io/name: {{ include "web-service.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}

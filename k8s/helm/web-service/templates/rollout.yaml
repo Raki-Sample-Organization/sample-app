@@ -1,21 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: {{ include "sample-app.fullname" . }}
+  name: {{ include "web-service.fullname" . }}
   labels:
-    {{- include "sample-app.labels" . | nindent 4 }}
+    {{- include "web-service.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.deployment.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "sample-app.name" . }}
+      app.kubernetes.io/name: {{ include "web-service.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
   revisionHistoryLimit: 3
   strategy:
     {{- if eq .Values.deployment.strategy "blueGreen" }}
     blueGreen:
-      activeService: {{ include "sample-app.fullname" . }}
-      previewService: {{ print (include "sample-app.fullname" .) "-preview" }}
+      activeService: {{ include "web-service.fullname" . }}
+      previewService: {{ print (include "web-service.fullname" .) "-preview" }}
       maxUnavailable: {{ .Values.deployment.maxUnavailable }}
       autoPromotionEnabled: {{ .Values.deployment.blueGreenConfig.autoPromotionEnabled }}
       autoPromotionSeconds: {{ default 300 .Values.deployment.blueGreenConfig.autoPromotionSeconds }}
@@ -29,7 +29,7 @@ spec:
           {{- end }}
         args:
           - name: service-name
-            value: {{ print (include "sample-app.fullname" .) "-preview" }}
+            value: {{ print (include "web-service.fullname" .) "-preview" }}
       {{- end }}
       {{- if gt (len .Values.deployment.blueGreenConfig.postPromotionAnalysis) 0 }}
       postPromotionAnalysis:
@@ -39,12 +39,12 @@ spec:
           {{- end }}
         args:
           - name: service-name
-            value: {{ include "sample-app.fullname" . }}
+            value: {{ include "web-service.fullname" . }}
       {{- end }}
     {{- else if eq .Values.deployment.strategy "canary" }}
     canary:
-      stableService: {{ include "sample-app.fullname" . }}
-      canaryService: {{ print (include "sample-app.fullname" .) "-canary" }}
+      stableService: {{ include "web-service.fullname" . }}
+      canaryService: {{ print (include "web-service.fullname" .) "-canary" }}
       maxUnavailable: {{ .Values.deployment.maxUnavailable }}
       maxSurge: {{ .Values.deployment.canaryConfig.maxSurge }}
       steps:
@@ -57,7 +57,7 @@ spec:
         startingStep: {{ .Values.deployment.canaryConfig.analysisStartingStep }}
         args:
           - name: service-name
-            value: {{ print (include "sample-app.fullname" .) "-canary" }}
+            value: {{ print (include "web-service.fullname" .) "-canary" }}
     {{- else }}
     canary:
       maxSurge: {{ .Values.deployment.rollingUpdateConfig.maxSurge }}
@@ -66,7 +66,7 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "sample-app.name" . }}
+        app.kubernetes.io/name: {{ include "web-service.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
@@ -74,6 +74,24 @@ spec:
           securityContext: {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.databaseSecret.name }}
+                  key: {{ .Values.databaseSecret.hostKey }}
+            - name: DATABASE_NAME
+              value: {{ .Values.databaseName }}
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.databaseSecret.name }}
+                  key: {{ .Values.databaseSecret.usernameKey }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.databaseSecret.name }}
+                  key: {{ .Values.databaseSecret.passwordKey }}
           ports:
             - name: http
               containerPort: 8080

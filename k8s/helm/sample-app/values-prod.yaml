@@ -1,7 +1,0 @@
----
-image:
-  repository: nginx
-  pullPolicy: Always
-deployment:
-  replicaCount: 10
-  maxUnavailable: 0

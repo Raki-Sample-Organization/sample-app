@@ -1,8 +1,0 @@
----
-deployment:
-  strategy: abTesting
-  abTestingConfig:
-    duration: 12h
-    replicas: 1
-    analysisTemplates:
-      - health-test

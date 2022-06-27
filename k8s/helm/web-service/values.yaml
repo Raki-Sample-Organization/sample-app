@@ -2,24 +2,26 @@
 nameOverride: ""
 fullnameOverride: ""
 
-image:
-  repository: nginx
-  tag: stable
-  pullPolicy: IfNotPresent
-
-imagePullSecrets: []
-
 deployment:
+  # Default number of replicas
   replicaCount: 3
   # Possible values: rollingUpdate | blueGreen | canary | abTesting
   strategy: rollingUpdate
   # Maximum unavailable pods
   maxUnavailable: 0
-  # Blue Green configuration (only works if `strategy` == "rollingUpdate")
+
+  ##################################################################
+  # Rolling update strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'rollingUpdate'
+  ##################################################################
   rollingUpdateConfig:
     maxSurge: 25%
     maxUnavailable: 0
-  # Blue Green configuration (only works if `strategy` == "blueGreen")
+
+  ##################################################################
+  # Blue-Green strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'blueGreen'
+  ##################################################################
   # blueGreenConfig:
   #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#autopromotionenabled
   #   autoPromotionEnabled: false
@@ -33,7 +35,11 @@ deployment:
   #   prePromotionAnalysis: [health-test]
   #   # List of analysis templates to execute AFTER promoting new version
   #   postPromotionAnalysis: [health-test]
-  # Canary configuration (only works if `strategy` == "blueGreen")
+
+  ##################################################################
+  # Canary strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'canary'
+  ##################################################################
   # canaryConfig:
   #   # Maximum number of replicas the rollout can create to move to the correct ratio set by the last setWeight
   #   maxSurge: 25%
@@ -47,24 +53,31 @@ deployment:
   #         duration: 1h
   #   analysisTemplates: [health-test]
   #   analysisStartingStep: 2
-  # A/B testing configuration
+
+  ##################################################################
+  # A/B test strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'abTesting'
+  ##################################################################
   # abTestingConfig:
   #   duration: 12h
   #   replicas: 1
   #   analysisTemplates:
   #     - health-test
 
+##################################################################
+# Additional pod configuration
+##################################################################
 podSecurityContext: {}
-  # fsGroup: 2000
-
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
+##################################################################
+# Container configuration
+##################################################################
+image:
+  repository:
+  tag:
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
 resources:
   limits:
     cpu: 200m
@@ -72,7 +85,6 @@ resources:
   requests:
     cpu: 100m
     memory: 128Mi
-
 livenessProbe:
   httpGet:
     path: /actuator/health
@@ -86,18 +98,39 @@ readinessProbe:
   initialDelaySeconds: 10
   periodSeconds: 3
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
 
+##################################################################
+# Service configuration
+##################################################################
 service:
   type: ClusterIP
   port: 80
 
+##################################################################
+# Service Account configuration
+##################################################################
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
+
+##################################################################
+# Database configuration
+##################################################################
+databaseName:
+databaseSecret:
+  name:
+  usernameKey:
+  passwordKey:
+  hostKey:
+
+##################################################################
+# Integration Tests
+##################################################################
+integrationTests:
+  enabled: false
+  image:
