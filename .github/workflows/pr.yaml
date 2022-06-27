@@ -8,7 +8,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: sample-app
   CLUSTER_NAME: raki-sample-org-production-apps
-  HELM_PATH: k8s/helm/sample-app
+  HELM_PATH: k8s/helm/web-service
   HELM_RELEASE: sample-app
   NAMESPACE: sample-app
   ARGO_ROLLOUT_NAME: sample-app
@@ -50,7 +50,7 @@ jobs:
       - name: Checkout infrastructure repo
         uses: actions/checkout@v3
         with:
-          repository: $INFRASTRUCTURE_REPO
+          repository: ${{ env.INFRASTRUCTURE_REPO }}
           token: ${{ secrets.GH_REPO_VIEWER_TOKEN }}
           path: infrastructure
       - name: Configure AWS Credentials
@@ -61,8 +61,8 @@ jobs:
           role-session-name: TestsManifests
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --name $CLUSTER_NAME 2>/dev/null
-      - name: Build ephemeral environment manifests
-        run: kustomize build infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
+      - name: Dry run ephemeral environment
+        run: kustomize apply --dry-run=client -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
       - name: Helm dry-run (Rolling)
         run: make dry-run
       - name: Helm dry-run (Blue Green)
