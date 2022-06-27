@@ -24,11 +24,9 @@ services:
       - postgres
   tests:
     profiles: [tests]
-    image: cypress/included:10.2.0
+    build:
+      context: ./integration-tests
     environment:
       CYPRESS_APP_HOST: http://sample-app:8080
-    working_dir: /e2e
-    volumes:
-      - ./integration-tests:/e2e
     depends_on:
       - sample-app

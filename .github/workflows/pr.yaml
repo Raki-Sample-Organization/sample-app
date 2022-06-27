@@ -21,7 +21,7 @@ jobs:
       - name: Run application stack
         run: docker-compose up --build --force-recreate -d
       - name: Run Integration Tests
-        run: docker-compose up tests
+        run: docker-compose --profile tests up --exit-code-from tests
       - name: Turn application down
         run: docker-compose down
   helm_checks:
