@@ -29,6 +29,13 @@ push-integration-tests-image:
 
 build-push-images: build-app-image push-app-image build-integration-tests-image push-integration-tests-image
 
+run-integration-tests:
+	docker-compose up -d postgres
+	gradle generateJooq
+	docker-compose up --build --force-recreate -d
+	docker-compose --profile tests up --exit-code-from tests
+	docker-compose down
+
 deploy-ephemeral-app:
 	helm -n $(NAMESPACE) install $(HELM_RELEASE) $(HELM_PATH) \
 		-f $(HELM_PATH)/values-production.yaml \
