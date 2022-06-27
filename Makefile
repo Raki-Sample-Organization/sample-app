@@ -32,20 +32,20 @@ build-push-images: build-app-image push-app-image build-integration-tests-image 
 deploy-ephemeral-app:
 	helm -n $(NAMESPACE) install $(HELM_RELEASE) $(HELM_PATH) \
 		-f $(HELM_PATH)/values-production.yaml \
-		--set "web-service.image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
-		--set "web-service.image.tag=$(IMAGE_TAG)" \
-		--set "web-service.deployment.strategy=rollingUpdate" \
-		--set "web-service.integrationTests.enabled=true" \
-		--set "web-service.integrationTests.image=$(ECR_REGISTRY)/$(ECR_REPOSITORY)-it:$(IMAGE_TAG)" \
+		--set "image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
+		--set "image.tag=$(IMAGE_TAG)" \
+		--set "deployment.strategy=rollingUpdate" \
+		--set "integrationTests.enabled=true" \
+		--set "integrationTests.image=$(ECR_REGISTRY)/$(ECR_REPOSITORY)-it:$(IMAGE_TAG)" \
 		--timeout 1h \
 		--wait
 
 dry-run:
 	helm -n $(NAMESPACE) upgrade -i $(HELM_RELEASE) $(HELM_PATH) \
 		-f $(HELM_PATH)/values-production.yaml \
-		--set "web-service.image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
-		--set "web-service.image.tag=$(IMAGE_TAG)" \
-		--set "web-service.deployment.strategy=$(DEPLOYMENT_STRATEGY)" \
+		--set "image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
+		--set "image.tag=$(IMAGE_TAG)" \
+		--set "deployment.strategy=$(DEPLOYMENT_STRATEGY)" \
 		--timeout 5m \
 		--wait \
 		--dry-run
@@ -53,8 +53,8 @@ dry-run:
 deploy:
 	helm -n $(NAMESPACE) install $(HELM_RELEASE) $(HELM_PATH) \
 		-f $(HELM_PATH)/values-production.yaml \
-		--set "web-service.image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
-		--set "web-service.image.tag=$(IMAGE_TAG)" \
-		--set "web-service.deployment.strategy=$(DEPLOYMENT_STRATEGY)" \
+		--set "image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
+		--set "image.tag=$(IMAGE_TAG)" \
+		--set "deployment.strategy=$(DEPLOYMENT_STRATEGY)" \
 		--timeout 5m \
 		--wait
