@@ -26,6 +26,7 @@ jobs:
           distribution: corretto
           java-version: '17'
       - name: Run unit tests
+        run: make build-app-image
   helm_checks:
     name: Helm checks
     runs-on: ubuntu-latest

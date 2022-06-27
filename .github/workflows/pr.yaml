@@ -28,11 +28,7 @@ jobs:
       - name: Run unit tests
         run: make build-app-image
       - name: Run application stack
-        run: docker-compose up --build --force-recreate -d
-      - name: Run integration tests
-        run: docker-compose --profile tests up --exit-code-from tests
-      - name: Turn application down
-        run: docker-compose down
+        run: make run-integration-tests
   helm_checks:
     name: Helm checks
     runs-on: ubuntu-latest
