@@ -66,7 +66,7 @@ jobs:
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --name $CLUSTER_NAME 2>/dev/null
       - name: Dry run ephemeral environment
-        run: kustomize apply --dry-run=client -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
+        run: kubectl apply --dry-run=client -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
       - name: Helm dry-run (Rolling)
         run: make dry-run
       - name: Helm dry-run (Blue Green)
