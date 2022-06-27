@@ -133,7 +133,7 @@ jobs:
           name: kubectl-argo-rollouts
           version: latest
       - name: Restart pods
-        run: kubectl-argo-rollouts -n $NAMESPACE restart $ARGO_ROLLOUT_NAME
+        run: kubectl-argo-rollouts -n $NAMESPACE restart $ARGO_ROLLOUT_NAME || true
       - name: Set deployment strategy
         id: deployment_strategy
         run: |-
