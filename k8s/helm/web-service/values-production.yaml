@@ -65,7 +65,7 @@ image:
 ##################################################################
 databaseName: sampleappdb
 databaseSecret:
-  name: sample-app-postgres
+  name: sample-app-postgres-rds-instance
   usernameKey: username
   passwordKey: password
   hostKey: endpoint
