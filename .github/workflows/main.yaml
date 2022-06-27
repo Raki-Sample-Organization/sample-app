@@ -13,8 +13,6 @@ env:
   NAMESPACE: sample-app
   ARGO_ROLLOUT_NAME: sample-app
   INFRASTRUCTURE_REPO: Raki-Sample-Organization/infrastructure
-  INFRASTRUCTURE_EPHEMERAL_PATH: k8s/overlays/ephemeral/sample-app
-  INTEGRATION_TESTS_JOB_NAME: sample-app-it
 jobs:
   test:
     name: Build and Test
@@ -102,18 +100,9 @@ jobs:
       - name: Connect to EKS Cluster
         if: contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: aws eks update-kubeconfig --name $CLUSTER_NAME 2>/dev/null
-      - name: Create ephemeral environment
+      - name: Create ephemeral environment and run the integration tests
         if: contains(github.event.commits[0].message, '[EPHEMERAL]')
-        run: kubectl apply -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
-      - name: Install application and run integration tests
-        if: contains(github.event.commits[0].message, '[EPHEMERAL]')
-        run: make deploy-ephemeral-app
-      - name: Print integration test logs
-        if: contains(github.event.commits[0].message, '[EPHEMERAL]')
-        run: kubectl -n "$NAMESPACE-ephemeral" logs job.batch/$INTEGRATION_TESTS_JOB_NAME
-      - name: Destroy ephemeral environment
-        if: always() && contains(github.event.commits[0].message, '[EPHEMERAL]')
-        run: kubectl delete -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
+        run: make run-integration-tests-ephemeral
   deploy_to_production:
     name: Deploy to production
     runs-on: ubuntu-latest
