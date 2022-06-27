@@ -13,7 +13,7 @@ env:
   NAMESPACE: sample-app
   ARGO_ROLLOUT_NAME: sample-app
   INFRASTRUCTURE_REPO: Raki-Sample-Organization/infrastructure
-  INFRASTRUCTURE_EPHEMERAL_PATH: k8s/overlays/ephemeral/sample-app
+  INFRASTRUCTURE_EPHEMERAL_PATH: infrastructure/k8s/overlays/ephemeral/sample-app
 jobs:
   test:
     name: Build and Test
@@ -69,7 +69,6 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: build_image
-    if: contains(github.event.commits[0].message, '[EPHEMERAL]')
     env:
       ECR_REGISTRY: ${{ needs.build_image.outputs.registry }}
       IMAGE_TAG: ${{ needs.build_image.outputs.tag }}
@@ -80,27 +79,35 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@master
+      - name: Run integration tests (Docker)
+        if: ${{ ! contains(github.event.commits[0].message, '[EPHEMERAL]') }}
+        run: make run-integration-tests
       - name: Checkout infrastructure repo
+        if: contains(github.event.commits[0].message, '[EPHEMERAL]')
         uses: actions/checkout@v3
         with:
           repository: ${{ env.INFRASTRUCTURE_REPO }}
           token: ${{ secrets.GH_REPO_VIEWER_TOKEN }}
           path: infrastructure
       - name: Configure AWS Credentials
+        if: contains(github.event.commits[0].message, '[EPHEMERAL]')
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: SampleAppIntegrationTests
       - name: Connect to EKS Cluster
+        if: contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: aws eks update-kubeconfig --name $CLUSTER_NAME 2>/dev/null
       - name: Create ephemeral environment
-        run: kubectl apply -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
-      - name: Install application and run integration tests
-        run: make deploy-ephemeral-app
-      - name: Destroy ephemeral environment
-        if: always()
-        run: kubectl delete -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
+        if: contains(github.event.commits[0].message, '[EPHEMERAL]')
+        run: make provision-ephemeral-environment
+      - name: Run integration tests
+        if: contains(github.event.commits[0].message, '[EPHEMERAL]')
+        run: make run-integration-tests-helm
+      - name: Terminate ephemeral environment
+        if: always() && contains(github.event.commits[0].message, '[EPHEMERAL]')
+        run: make terminate-ephemeral-environment
   deploy_to_production:
     name: Deploy to production
     runs-on: ubuntu-latest

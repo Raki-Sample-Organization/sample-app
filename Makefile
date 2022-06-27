@@ -8,6 +8,8 @@ NAMESPACE ?= sample-app
 HELM_RELEASE ?= sample-app
 HELM_PATH ?= k8s/helm/web-service
 DEPLOYMENT_STRATEGY ?= rollingUpdate
+INFRASTRUCTURE_EPHEMERAL_PATH ?= ../infrastructure/k8s/overlays/ephemeral/sample-app
+INTEGRATION_TESTS_JOB_NAME ?= sample-app-it
 
 # ====================================================================================
 # Targets
@@ -29,16 +31,30 @@ push-integration-tests-image:
 
 build-push-images: build-app-image push-app-image build-integration-tests-image push-integration-tests-image
 
-deploy-ephemeral-app:
+run-integration-tests:
+	docker-compose up -d postgres
+	gradle generateJooq
+	docker-compose up --build --force-recreate -d
+	docker-compose --profile tests up --exit-code-from tests
+	docker-compose down
+
+provision-ephemeral-environment:
+	kubectl apply -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
+	kubectl wait --for=condition=ready --timeout=1h -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
+
+run-integration-tests-helm:
 	helm -n $(NAMESPACE) install $(HELM_RELEASE) $(HELM_PATH) \
 		-f $(HELM_PATH)/values-production.yaml \
 		--set "image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
 		--set "image.tag=$(IMAGE_TAG)" \
 		--set "deployment.strategy=rollingUpdate" \
 		--set "integrationTests.enabled=true" \
-		--set "integrationTests.image=$(ECR_REGISTRY)/$(ECR_REPOSITORY)-it:$(IMAGE_TAG)" \
 		--timeout 1h \
 		--wait
+
+terminate-ephemeral-environment:
+	kubectl -n "$(NAMESPACE)-ephemeral" logs jobs/$(INTEGRATION_TESTS_JOB_NAME)
+	kubectl delete -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
 
 dry-run:
 	helm -n $(NAMESPACE) upgrade -i $(HELM_RELEASE) $(HELM_PATH) \

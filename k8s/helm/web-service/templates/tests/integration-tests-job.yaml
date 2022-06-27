@@ -21,7 +21,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: integration-tests
-          image: {{ .Values.integrationTests.image }}
+          image: {{ printf "%s-it:%s" .Values.image.repository .Values.image.tag }}
           env:
             - name: CYPRESS_APP_HOST
               value: {{ printf "http://%s.%s.svc.cluster.local:8080" (include "web-service.fullname" .) .Release.Namespace }}
