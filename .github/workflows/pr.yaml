@@ -1,0 +1,77 @@
+---
+name: Pull Request
+on:
+  pull_request:
+    branches: [main]
+env:
+  DOCKER_BUILDKIT: "1"
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: sample-app
+  CLUSTER_NAME: raki-sample-org-production-apps
+  HELM_PATH: k8s/helm/web-service
+  HELM_RELEASE: sample-app
+  NAMESPACE: sample-app
+  ARGO_ROLLOUT_NAME: sample-app
+  INFRASTRUCTURE_REPO: Raki-Sample-Organization/infrastructure
+  INFRASTRUCTURE_EPHEMERAL_PATH: k8s/overlays/ephemeral/sample-app
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: '17'
+      - name: Run unit tests
+        run: make build-app-image
+      - name: Run application stack
+        run: docker-compose up --build --force-recreate -d
+      - name: Run integration tests
+        run: docker-compose --profile tests up --exit-code-from tests
+      - name: Turn application down
+        run: docker-compose down
+  helm_checks:
+    name: Helm checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Helm Lint
+        run: helm lint $HELM_PATH
+  test_manifests:
+    name: Test Kubernetes manifests
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Checkout infrastructure repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.INFRASTRUCTURE_REPO }}
+          token: ${{ secrets.GH_REPO_VIEWER_TOKEN }}
+          path: infrastructure
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: TestsManifests
+      - name: Connect to EKS Cluster
+        run: aws eks update-kubeconfig --name $CLUSTER_NAME 2>/dev/null
+      - name: Dry run ephemeral environment
+        run: kubectl apply --dry-run=client -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH
+      - name: Helm dry-run (Rolling)
+        run: make dry-run
+      - name: Helm dry-run (Blue Green)
+        run: make dry-run DEPLOYMENT_STRATEGY=blueGreen
+      - name: Helm dry-run (Canary)
+        run: make dry-run DEPLOYMENT_STRATEGY=canary
+      - name: Helm dry-run (AB)
+        run: make dry-run DEPLOYMENT_STRATEGY=abTesting

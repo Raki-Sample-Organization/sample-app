@@ -1,0 +1,136 @@
+---
+nameOverride: ""
+fullnameOverride: ""
+
+deployment:
+  # Default number of replicas
+  replicaCount: 3
+  # Possible values: rollingUpdate | blueGreen | canary | abTesting
+  strategy: rollingUpdate
+  # Maximum unavailable pods
+  maxUnavailable: 0
+
+  ##################################################################
+  # Rolling update strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'rollingUpdate'
+  ##################################################################
+  rollingUpdateConfig:
+    maxSurge: 25%
+    maxUnavailable: 0
+
+  ##################################################################
+  # Blue-Green strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'blueGreen'
+  ##################################################################
+  # blueGreenConfig:
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#autopromotionenabled
+  #   autoPromotionEnabled: false
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#autopromotionseconds
+  #   autoPromotionSeconds: null
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#previewreplicacount
+  #   previewReplicaCount: 2
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/bluegreen/#scaledowndelayseconds
+  #   scaleDownDelaySeconds: 30
+  #   # List of analysis templates to execute BEFORE promoting new version
+  #   prePromotionAnalysis: [health-test]
+  #   # List of analysis templates to execute AFTER promoting new version
+  #   postPromotionAnalysis: [health-test]
+
+  ##################################################################
+  # Canary strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'canary'
+  ##################################################################
+  # canaryConfig:
+  #   # Maximum number of replicas the rollout can create to move to the correct ratio set by the last setWeight
+  #   maxSurge: 25%
+  #   # Ref: https://argoproj.github.io/argo-rollouts/features/canary/#example
+  #   steps:
+  #     - setWeight: 20
+  #     - pause:
+  #         duration: 1h
+  #     - setWeight: 50
+  #     - pause:
+  #         duration: 1h
+  #   analysisTemplates: [health-test]
+  #   analysisStartingStep: 2
+
+  ##################################################################
+  # A/B test strategy configuration
+  # Only works if `web-service.deployment.strategy` == 'abTesting'
+  ##################################################################
+  # abTestingConfig:
+  #   duration: 12h
+  #   replicas: 1
+  #   analysisTemplates:
+  #     - health-test
+
+##################################################################
+# Additional pod configuration
+##################################################################
+podSecurityContext: {}
+securityContext: {}
+
+##################################################################
+# Container configuration
+##################################################################
+image:
+  repository:
+  tag:
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+livenessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 3
+readinessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 3
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+##################################################################
+# Service configuration
+##################################################################
+service:
+  type: ClusterIP
+  port: 80
+
+##################################################################
+# Service Account configuration
+##################################################################
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+##################################################################
+# Database configuration
+##################################################################
+databaseName:
+databaseSecret:
+  name:
+  usernameKey:
+  passwordKey:
+  hostKey:
+
+##################################################################
+# Integration Tests
+##################################################################
+integrationTests:
+  enabled: false
+  image:

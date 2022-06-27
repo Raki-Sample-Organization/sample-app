@@ -1,0 +1,16 @@
+{{- if contains .Values.deployment.strategy "blueGreen,canary,abTesting" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: health-test
+spec:
+  args:
+    - name: service-name
+  metrics:
+    - name: health-test
+      successCondition: result == "UP"
+      provider:
+        web:
+          url: {{ print "http://" "{{" " args.service-name " "}}" ".svc.cluster.local:8080/actuator/health" | quote }}
+          jsonPath: "{$.status}"
+{{- end -}}
