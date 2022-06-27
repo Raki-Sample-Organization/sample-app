@@ -44,6 +44,10 @@ jobs:
   test_manifests:
     name: Test Kubernetes manifests
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout source code
         uses: actions/checkout@master
