@@ -14,6 +14,7 @@ env:
   ARGO_ROLLOUT_NAME: sample-app
   INFRASTRUCTURE_REPO: Raki-Sample-Organization/infrastructure
   INFRASTRUCTURE_EPHEMERAL_PATH: k8s/overlays/ephemeral/sample-app
+  INTEGRATION_TESTS_JOB_NAME: sample-app-it
 jobs:
   test:
     name: Build and Test
@@ -80,7 +81,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@master
       ## Run integration tests using Docker
-      - name: Run application stack
+      - name: Run integration tests
         if: ${{ ! contains(github.event.commits[0].message, '[EPHEMERAL]') }}
         run: make run-integration-tests
       ## Run integration tests using ephemeral environment
@@ -107,6 +108,9 @@ jobs:
       - name: Install application and run integration tests
         if: contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: make deploy-ephemeral-app
+      - name: Print integration test logs
+        if: contains(github.event.commits[0].message, '[EPHEMERAL]')
+        run: kubectl -n "$NAMESPACE-ephemeral" logs job.batch/$INTEGRATION_TESTS_JOB_NAME
       - name: Destroy ephemeral environment
         if: always() && contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: kubectl delete -k infrastructure/$INFRASTRUCTURE_EPHEMERAL_PATH

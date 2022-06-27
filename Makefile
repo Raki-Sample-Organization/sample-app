@@ -43,7 +43,6 @@ deploy-ephemeral-app:
 		--set "image.tag=$(IMAGE_TAG)" \
 		--set "deployment.strategy=rollingUpdate" \
 		--set "integrationTests.enabled=true" \
-		--set "integrationTests.image=$(ECR_REGISTRY)/$(ECR_REPOSITORY)-it:$(IMAGE_TAG)" \
 		--timeout 1h \
 		--wait
 

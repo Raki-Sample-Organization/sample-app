@@ -133,4 +133,3 @@ databaseSecret:
 ##################################################################
 integrationTests:
   enabled: false
-  image:

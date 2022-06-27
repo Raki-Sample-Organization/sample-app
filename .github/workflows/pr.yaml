@@ -27,7 +27,7 @@ jobs:
           java-version: '17'
       - name: Run unit tests
         run: make build-app-image
-      - name: Run application stack
+      - name: Run integration tests
         run: make run-integration-tests
   helm_checks:
     name: Helm checks
