@@ -30,10 +30,10 @@ jobs:
       - name: Run unit tests
         run: gradle build
       - name: Run application stack
-        if: ${{ ! contains(github.event.commits[0].message, "[EPHEMERAL]") }}
+        if: ${{ ! contains(github.event.commits[0].message, '[EPHEMERAL]') }}
         run: docker-compose up --build --force-recreate -d
       - name: Run integration tests
-        if: ${{ ! contains(github.event.commits[0].message, "[EPHEMERAL]") }}
+        if: ${{ ! contains(github.event.commits[0].message, '[EPHEMERAL]') }}
         run: docker-compose --profile tests up --exit-code-from tests
       - name: Turn application down
         run: docker-compose down
