@@ -41,7 +41,7 @@ run-integration-tests:
 provision-ephemeral-environment:
 	kustomize build $(INFRASTRUCTURE_EPHEMERAL_PATH) > ephemeral.yaml
 	kubectl apply -f ephemeral.yaml
-	kubectl wait --for=condition=ready --timeout=30m -f ephemeral.yaml
+	kubectl wait --for=condition=ready --timeout=30m rdsinstance/sample-app-postgres
 
 run-integration-tests-helm:
 	helm -n $(NAMESPACE) template $(HELM_RELEASE) $(HELM_PATH) \
