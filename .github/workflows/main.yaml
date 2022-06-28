@@ -99,19 +99,27 @@ jobs:
       - name: Connect to EKS Cluster
         if: contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: aws eks update-kubeconfig --name $CLUSTER_NAME 2>/dev/null
+      - if: contains(github.event.commits[0].message, '[EPHEMERAL]')
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+          name: kubectl-argo-rollouts
+          version: latest
       - name: Create ephemeral environment
         if: contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: make provision-ephemeral-environment
       - name: Run integration tests
         if: contains(github.event.commits[0].message, '[EPHEMERAL]')
-        run: make run-integration-tests-helm
+        env:
+          NAMESPACE: "$NAMESPACE-ephemeral"
+        run: make deploy run-integration-tests-helm NAMESPACE="$NAMESPACE-ephemeral"
       - name: Terminate ephemeral environment
         if: always() && contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: make terminate-ephemeral-environment
   deploy_to_production:
     name: Deploy to production
     runs-on: ubuntu-latest
-    needs: integration_tests
+    needs: [build_image, integration_tests]
     permissions:
       id-token: write
       contents: read
@@ -148,5 +156,7 @@ jobs:
           echo "::set-output name=value::$DEPLOYMENT_STRATEGY"
       - name: Deploy application
         env:
+          ECR_REGISTRY: ${{ needs.build_image.outputs.registry }}
+          IMAGE_TAG: ${{ needs.build_image.outputs.tag }}
           DEPLOYMENT_STRATEGY: ${{ steps.deployment_strategy.outputs.value }}
         run: make deploy

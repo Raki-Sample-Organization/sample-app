@@ -5,10 +5,6 @@ metadata:
   name: {{ print (include "web-service.fullname" .) "-it" }}
   labels:
     {{- include "web-service.labels" . | nindent 4 }}
-  annotations:
-    helm.sh/hook: post-install
-    helm.sh/hook-weight: "0"
-    helm.sh/hook-delete-policy: hook-succeeded
 spec:
   ttlSecondsAfterFinished: 120
   backoffLimit: 0

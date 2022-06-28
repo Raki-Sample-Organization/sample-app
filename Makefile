@@ -40,20 +40,20 @@ run-integration-tests:
 
 provision-ephemeral-environment:
 	kubectl apply -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
-	kubectl wait --for=condition=ready --timeout=1h -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
+	kubectl wait --for=condition=ready --timeout=30m -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
 
 run-integration-tests-helm:
-	helm -n $(NAMESPACE) install $(HELM_RELEASE) $(HELM_PATH) \
-		-f $(HELM_PATH)/values-production.yaml \
+	helm -n $(NAMESPACE) template $(HELM_RELEASE) $(HELM_PATH) \
 		--set "image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
 		--set "image.tag=$(IMAGE_TAG)" \
-		--set "deployment.strategy=rollingUpdate" \
 		--set "integrationTests.enabled=true" \
-		--timeout 1h \
-		--wait
+		-s templates/integration-tests-job.yaml \
+		> it-manifest.yaml
+	kubectl apply -f it-manifest.yaml
+	kubectl -n $(NAMESPACE) wait --for=condition=complete --timeout=10m jobs/$(INTEGRATION_TESTS_JOB_NAME)
 
 terminate-ephemeral-environment:
-	kubectl -n "$(NAMESPACE)-ephemeral" logs jobs/$(INTEGRATION_TESTS_JOB_NAME)
+	kubectl -n $(NAMESPACE) logs jobs/$(INTEGRATION_TESTS_JOB_NAME)
 	kubectl delete -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
 
 dry-run:
@@ -67,10 +67,11 @@ dry-run:
 		--dry-run
 
 deploy:
-	helm -n $(NAMESPACE) install $(HELM_RELEASE) $(HELM_PATH) \
+	helm -n $(NAMESPACE) upgrade -i $(HELM_RELEASE) $(HELM_PATH) \
 		-f $(HELM_PATH)/values-production.yaml \
 		--set "image.repository=$(ECR_REGISTRY)/$(ECR_REPOSITORY)" \
 		--set "image.tag=$(IMAGE_TAG)" \
 		--set "deployment.strategy=$(DEPLOYMENT_STRATEGY)" \
 		--timeout 5m \
 		--wait
+	kubectl-argo-rollouts -n $(NAMESPACE) status --watch --timeout 10m $(HELM_RELEASE)
