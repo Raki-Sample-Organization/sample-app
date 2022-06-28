@@ -89,14 +89,16 @@ livenessProbe:
   httpGet:
     path: /actuator/health
     port: http
-  initialDelaySeconds: 10
-  periodSeconds: 3
+  initialDelaySeconds: 30
+  failureThreshold: 3
+  periodSeconds: 10
 readinessProbe:
   httpGet:
     path: /actuator/health
     port: http
-  initialDelaySeconds: 10
-  periodSeconds: 3
+  initialDelaySeconds: 30
+  failureThreshold: 3
+  periodSeconds: 10
 nodeSelector: {}
 tolerations: []
 affinity: {}
