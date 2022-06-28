@@ -52,9 +52,9 @@ run-integration-tests-helm:
 		> it-manifest.yaml
 	kubectl apply -f it-manifest.yaml
 	kubectl -n $(NAMESPACE) wait --for=condition=complete --timeout=10m jobs/$(INTEGRATION_TESTS_JOB_NAME)
+	kubectl -n $(NAMESPACE) logs jobs/$(INTEGRATION_TESTS_JOB_NAME)
 
 terminate-ephemeral-environment:
-	kubectl -n $(NAMESPACE) logs jobs/$(INTEGRATION_TESTS_JOB_NAME)
 	kubectl delete -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
 
 dry-run:

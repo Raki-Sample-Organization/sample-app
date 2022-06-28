@@ -114,8 +114,31 @@ jobs:
       - name: Run integration tests
         if: contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: make deploy run-integration-tests-helm NAMESPACE="$NAMESPACE-ephemeral" ECR_REGISTRY="${{ steps.login_ecr.outputs.registry }}"
+  remove_ephemeral_environment:
+    name: Remove ephemeral environment
+    runs-on: ubuntu-latest
+    needs: integration_tests
+    if: always() && contains(github.event.commits[0].message, '[EPHEMERAL]')
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+      - name: Checkout infrastructure repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.INFRASTRUCTURE_REPO }}
+          token: ${{ secrets.GH_REPO_VIEWER_TOKEN }}
+          path: infrastructure
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: SampleAppIntegrationTests
       - name: Terminate ephemeral environment
-        if: always() && contains(github.event.commits[0].message, '[EPHEMERAL]')
         run: make terminate-ephemeral-environment
   deploy_to_production:
     name: Deploy to production
