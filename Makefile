@@ -39,8 +39,9 @@ run-integration-tests:
 	docker-compose down
 
 provision-ephemeral-environment:
-	kubectl apply -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
-	kubectl wait --for=condition=ready --timeout=30m -k $(INFRASTRUCTURE_EPHEMERAL_PATH)
+	kustomize build $(INFRASTRUCTURE_EPHEMERAL_PATH) > ephemeral.yaml
+	kubectl apply -f ephemeral.yaml
+	kubectl wait --for=condition=ready --timeout=30m -f ephemeral.yaml
 
 run-integration-tests-helm:
 	helm -n $(NAMESPACE) template $(HELM_RELEASE) $(HELM_PATH) \
