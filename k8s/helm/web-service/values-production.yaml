@@ -3,7 +3,7 @@ fullnameOverride: sample-app
 
 deployment:
   strategy: "" # Set by GitHub Actions
-  replicaCount: 10
+  replicaCount: 5
   maxUnavailable: 0
   ##################################################################
   # Rolling update strategy configuration
@@ -36,7 +36,7 @@ deployment:
       - setWeight: 20
       - pause:
           duration: 2m
-      - setWeight: 50
+      - setWeight: 60
       - pause:
           duration: 2m
     analysisTemplates:
