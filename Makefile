@@ -11,6 +11,7 @@ DEPLOYMENT_STRATEGY ?= rollingUpdate
 INFRASTRUCTURE_EPHEMERAL_PATH ?= ../infrastructure/k8s/overlays/ephemeral/sample-app
 INTEGRATION_TESTS_JOB_NAME ?= sample-app-it
 
+
 # ====================================================================================
 # Targets
 
